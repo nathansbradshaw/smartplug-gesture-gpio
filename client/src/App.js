@@ -8,12 +8,12 @@ import { useEffect } from 'react';
 import { birdGesture } from "./bird"
 import { weakBirdGesture } from "./weakBird"
 import * as fp from "fingerpose"
+import socketIOClient from "socket.io-client";
+import { socket } from './context/socket';
 
 function App() {
   const HANDMODE = 0; //0 for right hand, 1 for left hand
   const MAKER_KEY = process.env.REACT_APP_MAKER_KEY // add a .env file with your maker key
-  const DELAY = 7;
-  let counter = 0;
 
 
 
@@ -36,10 +36,7 @@ function App() {
       canvasCtx.drawImage(
         results.image, 0, 0, canvasElement.width, canvasElement.height);
       if (results.multiHandLandmarks) {
-        counter++
-        console.log(counter)
-        if (results.multiHandLandmarks[HANDMODE] !== undefined && results.multiHandLandmarks[HANDMODE] !== null && counter > DELAY) {
-          counter = DELAY + 1; // keep delay above delay unless the event was triggered
+        if (results.multiHandLandmarks[HANDMODE] !== undefined && results.multiHandLandmarks[HANDMODE] !== null) {
           const landmarksObj = results.multiHandLandmarks[HANDMODE]
           const landmarks = []
 
@@ -75,28 +72,9 @@ function App() {
             
             if ((gesture.gestures[maxConfidence].name === "flip_off" || gesture.gestures[maxConfidence].name === "enoch_flip_off")) {
               console.log("light off")
-              const requestOptions = {
-                method: 'POST',
-                cors: { origin: "*", },
-                // headers: {
-                //   'Access-Control-Allow-Origin' : '*'
-                // }
-              };
-              counter = 0;
-              fetch('https://maker.ifttt.com/trigger/light_off/with/key/' + MAKER_KEY, requestOptions)
-                .then(response => console.log(response))
-
+              socket.emit('light-off', ("off"));
             } else if (gesture.gestures[maxConfidence].name === "thumbs_up") {
-              const requestOptions = {
-                method: 'POST',
-                cors: { origin: "*", },
-                // headers: {
-                //   'Access-Control-Allow-Origin' : '*'
-                // }
-              };
-              counter = 0;
-              fetch('https://maker.ifttt.com/trigger/light_on/with/key/' + MAKER_KEY, requestOptions)
-                .then(response => console.log(response))
+              socket.emit('light-on', ("on"));
             }
           }
         }
